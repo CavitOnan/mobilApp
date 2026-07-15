@@ -5,7 +5,7 @@ import BatteryCard from './components/BatteryCard.jsx';
 import NetworkCard from './components/NetworkCard.jsx';
 import HistoryChart from './components/HistoryChart.jsx';
 import RecommendationsPanel from './components/RecommendationsPanel.jsx';
-import { formatPercent } from './utils/format.js';
+import { formatBytes, formatPercent } from './utils/format.js';
 
 const hasBridge = typeof window !== 'undefined' && !!window.perfMonitor;
 
@@ -85,7 +85,15 @@ export default function App() {
         <MetricCard title="CPU" percent={snapshot.cpu.loadPercent} subtitle={
           snapshot.cpu.temperature != null ? `Sıcaklık: ${snapshot.cpu.temperature}°C` : undefined
         } />
-        <MetricCard title="RAM" percent={snapshot.memory.usedPercent} subtitle={`${formatPercent(snapshot.memory.usedPercent)} kullanımda`} />
+        <MetricCard
+          title="RAM"
+          percent={snapshot.memory.usedPercent}
+          subtitle={`${formatBytes(snapshot.memory.usedBytes)} / ${formatBytes(snapshot.memory.totalBytes)}${
+            staticInfo?.memoryHardware?.maxCapacityBytes
+              ? ` · azami ${formatBytes(staticInfo.memoryHardware.maxCapacityBytes)}`
+              : ''
+          }`}
+        />
         <MetricCard
           title="Disk"
           percent={snapshot.disk.usedPercent}

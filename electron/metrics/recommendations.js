@@ -22,7 +22,39 @@ function average(values) {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function evaluateRecommendations(snapshot, recentHistory = []) {
+function formatGB(bytes) {
+  if (!bytes) return null;
+  return Math.round((bytes / 1024 ** 3) * 10) / 10;
+}
+
+// CPU sürekli/kritik yüksekken eklenecek not: dizüstülerde işlemci neredeyse
+// hiçbir zaman yükseltilebilir olmadığından (anakarta lehimli), burada bir
+// "azami değer" önerisi yerine bu sınırlamayı açıklayan bir not döndürülür.
+function buildCpuUpgradeNote(staticInfo) {
+  if (staticInfo?.isLaptop) {
+    return ' Dizüstü bilgisayarlarda işlemci genellikle anakarta lehimlidir ve donanımsal olarak yükseltilemez; bunun yerine RAM eklemek veya arka plan uygulamalarını azaltmak daha etkili olur.';
+  }
+  return '';
+}
+
+// RAM sürekli/kritik yüksekken, cihazın (Windows WMI üzerinden okunan) desteklediği
+// azami RAM kapasitesini mevcut kurulu kapasiteyle karşılaştırıp somut bir yükseltme
+// önerisi ya da "zaten azami kapasitede" bilgisini metne ekler.
+function buildMemoryUpgradeNote(staticInfo, installedBytes) {
+  const hw = staticInfo?.memoryHardware;
+  if (!hw || !hw.maxCapacityBytes) return '';
+
+  const installedGB = formatGB(installedBytes);
+  const maxGB = formatGB(hw.maxCapacityBytes);
+  const slotInfo = hw.slotsTotal != null ? ` (${hw.slotsUsed}/${hw.slotsTotal} slot dolu)` : '';
+
+  if (hw.maxCapacityBytes - installedBytes > 1024 ** 3) {
+    return ` Şu an ${installedGB} GB RAM kurulu; bu cihaz en fazla ${maxGB} GB RAM destekliyor${slotInfo}. RAM yükseltmek performansı belirgin şekilde artırabilir.`;
+  }
+  return ` Cihazınız zaten desteklediği azami RAM kapasitesinde (${maxGB} GB) çalışıyor; donanımsal RAM yükseltmesi mümkün değil, bunun yerine arka plan uygulamalarını azaltmayı deneyin.`;
+}
+
+function evaluateRecommendations(snapshot, recentHistory = [], staticInfo = null) {
   const recs = [];
 
   // --- CPU ---
@@ -36,7 +68,7 @@ function evaluateRecommendations(snapshot, recentHistory = []) {
       id: 'cpu-critical',
       severity: 'critical',
       title: 'CPU kullanımı çok yüksek',
-      description: `CPU şu anda %${snapshot.cpu.loadPercent} kullanımda. Görev Yöneticisi'nden yoğun işlem yapan uygulamaları kontrol edin ve gerekiyorsa kapatın.`,
+      description: `CPU şu anda %${snapshot.cpu.loadPercent} kullanımda. Görev Yöneticisi'nden yoğun işlem yapan uygulamaları kontrol edin ve gerekiyorsa kapatın.${buildCpuUpgradeNote(staticInfo)}`,
     });
   } else if (
     recentCpuSamples.length >= THRESHOLDS.cpuSustainedWindow &&
@@ -46,7 +78,7 @@ function evaluateRecommendations(snapshot, recentHistory = []) {
       id: 'cpu-sustained-high',
       severity: 'warning',
       title: 'CPU sürekli yüksek kullanımda',
-      description: 'Son bir dakikadır CPU kullanımı sürekli yüksek seyrediyor. Arka planda çalışan gereksiz uygulamaları veya başlangıç programlarını gözden geçirin.',
+      description: `Son bir dakikadır CPU kullanımı sürekli yüksek seyrediyor. Arka planda çalışan gereksiz uygulamaları veya başlangıç programlarını gözden geçirin.${buildCpuUpgradeNote(staticInfo)}`,
     });
   }
 
@@ -74,14 +106,14 @@ function evaluateRecommendations(snapshot, recentHistory = []) {
       id: 'mem-critical',
       severity: 'critical',
       title: 'Bellek (RAM) neredeyse dolu',
-      description: `RAM kullanımı %${snapshot.memory.usedPercent}. Kullanılmayan sekme/uygulamaları kapatın; sık tekrarlanıyorsa RAM yükseltmeyi değerlendirin.`,
+      description: `RAM kullanımı %${snapshot.memory.usedPercent}. Kullanılmayan sekme/uygulamaları kapatın.${buildMemoryUpgradeNote(staticInfo, snapshot.memory.totalBytes)}`,
     });
   } else if (snapshot.memory.usedPercent >= THRESHOLDS.memWarningPercent) {
     recs.push({
       id: 'mem-warning',
       severity: 'warning',
       title: 'Bellek kullanımı yüksek',
-      description: `RAM kullanımı %${snapshot.memory.usedPercent}. Arka planda çok fazla sekme/uygulama açık olabilir.`,
+      description: `RAM kullanımı %${snapshot.memory.usedPercent}. Arka planda çok fazla sekme/uygulama açık olabilir.${buildMemoryUpgradeNote(staticInfo, snapshot.memory.totalBytes)}`,
     });
   }
 

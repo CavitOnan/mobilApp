@@ -13,6 +13,28 @@ let isQuitting = false;
 let stopCollector = null;
 const historyStore = new HistoryStore();
 let notifiedCriticalIds = new Set();
+let staticInfoCache = null;
+let staticInfoPromise = null;
+
+// Donanım bilgisi (CPU modeli, RAM slot/azami kapasite vb.) neredeyse hiç değişmez
+// ve WMI sorgusu (RAM azami kapasitesi için) yüzlerce ms sürebilir; bu yüzden bir kez
+// alınıp önbelleğe alınır, her metrik döngüsünde yeniden sorgulanmaz.
+function getStaticInfo() {
+  if (staticInfoCache) return Promise.resolve(staticInfoCache);
+  if (!staticInfoPromise) {
+    staticInfoPromise = collectStaticInfo()
+      .then((info) => {
+        staticInfoCache = info;
+        return info;
+      })
+      .catch((err) => {
+        console.error('[main] statik sistem bilgisi alınamadı:', err);
+        staticInfoPromise = null;
+        return null;
+      });
+  }
+  return staticInfoPromise;
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -104,7 +126,7 @@ function startMonitoring() {
   stopCollector = startCollector((snapshot) => {
     const point = historyStore.addSnapshot(snapshot);
     const recentHistory = historyStore.getAll().live;
-    const recommendations = evaluateRecommendations(snapshot, recentHistory);
+    const recommendations = evaluateRecommendations(snapshot, recentHistory, staticInfoCache);
 
     if (tray) {
       tray.setToolTip(
@@ -123,7 +145,7 @@ function startMonitoring() {
 }
 
 ipcMain.handle('history:get', () => historyStore.getAll());
-ipcMain.handle('system:static-info', () => collectStaticInfo());
+ipcMain.handle('system:static-info', () => getStaticInfo());
 ipcMain.on('window:minimize-to-tray', () => {
   if (mainWindow) mainWindow.hide();
 });
@@ -135,6 +157,7 @@ ipcMain.on('app:quit', () => {
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  getStaticInfo();
   startMonitoring();
 
   app.on('activate', () => {
