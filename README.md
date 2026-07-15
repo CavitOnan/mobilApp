@@ -1,3 +1,6 @@
+> Bu repoda ayrıca bağımsız bir proje daha bulunuyor: [`lgs-okul-puan-takip/`](lgs-okul-puan-takip/README.md)
+> — LGS ile öğrenci alan özel okulların taban puan/kontenjan takibi için bir web sitesi.
+
 # Laptop Performans Monitörü
 
 Windows için, laptop performansını (CPU, RAM, disk, GPU, batarya, ağ) canlı olarak izleyen ve
