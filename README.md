@@ -1,4 +1,4 @@
-# Laptop Performans Monitörü
+# Laptop Perf Monitoring
 
 Windows için, laptop performansını (CPU, RAM, disk, GPU, batarya, ağ) canlı olarak izleyen ve
 tespit ettiği sorunlara göre öneriler sunan bir masaüstü uygulaması.

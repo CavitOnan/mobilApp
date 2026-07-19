@@ -69,7 +69,7 @@ export default function App() {
     <div className="app">
       <header className="app__header">
         <div>
-          <h1>Laptop Performans Monitörü</h1>
+          <h1>Laptop Perf Monitoring</h1>
           {staticInfo && (
             <p className="app__subtitle">
               {staticInfo.cpuBrand} · {staticInfo.osDistro} · {staticInfo.cpuPhysicalCores} çekirdek

@@ -74,7 +74,7 @@ function createWindow() {
 function createTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray-icon.png'));
   tray = new Tray(icon);
-  tray.setToolTip('Laptop Performans Monitörü');
+  tray.setToolTip('Laptop Perf Monitoring');
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -130,7 +130,7 @@ function startMonitoring() {
 
     if (tray) {
       tray.setToolTip(
-        `Laptop Performans Monitörü\nCPU: %${snapshot.cpu.loadPercent}  RAM: %${snapshot.memory.usedPercent}`
+        `Laptop Perf Monitoring\nCPU: %${snapshot.cpu.loadPercent}  RAM: %${snapshot.memory.usedPercent}`
       );
     }
 

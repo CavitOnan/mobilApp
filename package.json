@@ -1,6 +1,6 @@
 {
-  "name": "laptop-performance-monitor",
-  "productName": "Laptop Performans Monitörü",
+  "name": "laptop-perf-monitoring",
+  "productName": "Laptop Perf Monitoring",
   "version": "0.1.0",
   "description": "Laptop performansını izleyip iyileştirme önerileri sunan Windows masaüstü uygulaması",
   "main": "electron/main.js",
@@ -32,8 +32,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.cavitonan.laptopperformancemonitor",
-    "productName": "Laptop Performans Monitörü",
+    "appId": "com.cavitonan.laptopperfmonitoring",
+    "productName": "Laptop Perf Monitoring",
     "files": [
       "dist/**/*",
       "electron/**/*"
